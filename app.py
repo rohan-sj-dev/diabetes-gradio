@@ -10,7 +10,7 @@ scraped_data = {
 }
 
 
-openai_api_key = "AIzaSyCdpc-iIftehlnCDQpK04j1WnTSV-1Npbc" 
+openai_api_key = ""
 model = OpenAI(api_key=openai_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
 
 def run_scraper():
