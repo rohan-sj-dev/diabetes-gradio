@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import gradio as gr
 from openai import OpenAI
 from scrapeData import scrape_single_blog_post, get_all_clean_blog_text, blog_urls
@@ -128,3 +129,6 @@ if __name__ == "__main__":
     run_scraper()
 
     demo.launch()
+=======
+
+>>>>>>> c16fd19afa64d496d17109086bc8b398c451dd21
