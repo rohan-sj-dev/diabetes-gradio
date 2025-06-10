@@ -1,0 +1,5 @@
+requests
+gradio
+openai
+langchain_groq
+bs4
