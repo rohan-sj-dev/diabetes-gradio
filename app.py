@@ -1,17 +1,21 @@
-<<<<<<< HEAD
 import gradio as gr
+import os
+from dotenv import load_dotenv
 from openai import OpenAI
 from scrapeData import scrape_single_blog_post, get_all_clean_blog_text, blog_urls
 
+# Load environment variables from .env file
+load_dotenv()
 
+# In-memory storage for scraped data
 scraped_data = {
     "full_text": None,
     "blog_contents": {}
 }
 
-
-openai_api_key = ""
-model = OpenAI(api_key=openai_api_key, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
+# Use environment variable for API key (already in your .env file)
+OPEN_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCdpc-iIftehlnCDQpK04j1WnTSV-1Npbc")
+model = OpenAI(api_key=OPEN_API_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
 
 def run_scraper():
     """Run the scraper once to collect diabetes information"""
@@ -38,15 +42,12 @@ def get_system_context():
         if "?" in blog_name:
             blog_name = blog_name.split('?')[0]
 
-
         truncated_content = content[:2000] + ("..." if len(content) > 2000 else "")
         system_context += f"SOURCE: {blog_name}\n{truncated_content}\n\n---\n\n"
     
     return system_context
 
 def gemini_chat(message, history):
-
-
     if not scraped_data["full_text"]:
         run_scraper()
 
@@ -82,53 +83,122 @@ def gemini_chat(message, history):
     except Exception as e:
         return f"I'm sorry, I couldn't process your request. Error: {str(e)}"
 
+# Custom CSS for better appearance
+css = """
+.gradio-container {
+    background-color: #1a1a1a; 
+}
+.container {
+    max-width: 900px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-top: 1.5rem !important;
+}
+.header-text {
+    text-align: center;
+    color: black;
+}
+.header-subtext {
+    text-align: center;
+    color: black;
+    margin-bottom: 2rem;
+}
+.examples-container {
+    background-color: #f1f8e9;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    border: 1px solid #c5e1a5;
+    height: 25vh
+}
+.examples-header {
+    color: #33691e;
+    font-size: 1.3em;
+    margin-top: 0;
+}
+.footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+"""
 
-with gr.Blocks(title="Diabetes Chatbot Assistant") as demo:
-    gr.Markdown("# Diabetes Chatbot Assistant")
-    gr.Markdown("Chat with an AI assistant about diabetes management and health information.")
-    
-    with gr.Row():
-        status = gr.Markdown("*Loading diabetes information...*")
+with gr.Blocks(title="DiaCare AI", css=css) as demo:
+    with gr.Column(elem_classes="container"):
+        gr.Markdown("# DiaCare AI", elem_classes="header-text")
+        gr.Markdown("Your personal diabetes management assistant powered by trusted medical sources", elem_classes="header-subtext")
+        
 
-    chatbot = gr.Chatbot(
-    height=500,
-    avatar_images=("https://i.imgur.com/m5oYSal.png", "https://i.imgur.com/8kdkkiD.png")
-)
-    
-    with gr.Row():
-        chat_input = gr.Textbox(
-            placeholder="Ask me anything about diabetes...",
-            show_label=False,
-            container=False,
-            scale=9
+
+        chatbot = gr.Chatbot(
+            height=500,
+            avatar_images=("https://i.imgur.com/m5oYSal.png", "https://i.imgur.com/8kdkkiD.png"),
+            elem_id="chatbot"
         )
-        chat_button = gr.Button("Send", variant="primary", scale=1)
-    
-    gr.Markdown("""
-    ### Example Questions:
-    - What is the difference between Type 1 and Type 2 diabetes?
-    - How can exercise help control blood sugar?
-    - What symptoms should I watch for with hypoglycemia?
-    - How often should I check my blood glucose?
-    - What are good breakfast options for diabetics?
-    """)
-    
+        
+        with gr.Row():
+            chat_input = gr.Textbox(
+                placeholder="Ask me anything about diabetes...",
+                show_label=False,
+                container=False,
+                scale=9,
+                elem_id="chat-input"
+            )
+            chat_button = gr.Button("Send", variant="primary", scale=1)
+        
+        with gr.Column(elem_classes="examples-container"):
+            gr.Markdown("### How can I help you today?", elem_classes="examples-header")
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    q1_button = gr.Button("What is Type 2 diabetes?")
+                    q2_button = gr.Button("Diet recommendations")
+                
+                with gr.Column(scale=1):
+                    q3_button = gr.Button("Exercise benefits")
+                    q4_button = gr.Button("Blood sugar management")
+            
+            gr.Markdown("""
+            You can also ask about:
+            - Symptoms of hypoglycemia
+            - How often to check blood glucose 
+            - Diabetes complications
+            - Good breakfast options for diabetics
+            """)
+        
+        gr.Markdown("""
+        <div class="footer">
+        DiaCare AI provides information from trusted medical sources but is not a replacement for professional medical advice.
+        <br>© 2023 DiaCare AI - Helping you manage diabetes better
+        </div>
+        """, elem_classes="footer")
 
     def respond(message, chat_history):
         bot_message = gemini_chat(message, chat_history)
         chat_history.append((message, bot_message))
         return "", chat_history
     
+    # Set up chat functionality
     chat_input.submit(respond, [chat_input, chatbot], [chat_input, chatbot])
     chat_button.click(respond, [chat_input, chatbot], [chat_input, chatbot])
     
-    demo.load(lambda: "Data loaded and ready to chat!", None, status)
+    # Add quick question buttons functionality
+    q1_button.click(lambda: ("What is Type 2 diabetes?", []), None, [chat_input, chatbot], queue=False).then(
+        respond, [chat_input, chatbot], [chat_input, chatbot]
+    )
+    q2_button.click(lambda: ("What diet do you recommend for diabetes?", []), None, [chat_input, chatbot], queue=False).then(
+        respond, [chat_input, chatbot], [chat_input, chatbot]
+    )
+    q3_button.click(lambda: ("How does exercise help with diabetes?", []), None, [chat_input, chatbot], queue=False).then(
+        respond, [chat_input, chatbot], [chat_input, chatbot]
+    )
+    q4_button.click(lambda: ("Tips for managing blood sugar levels", []), None, [chat_input, chatbot], queue=False).then(
+        respond, [chat_input, chatbot], [chat_input, chatbot]
+    )
 
 if __name__ == "__main__":
-
     run_scraper()
-
     demo.launch()
-=======
-
->>>>>>> c16fd19afa64d496d17109086bc8b398c451dd21
