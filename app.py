@@ -14,7 +14,7 @@ scraped_data = {
 }
 
 # Use environment variable for API key (already in your .env file)
-OPEN_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyCdpc-iIftehlnCDQpK04j1WnTSV-1Npbc")
+OPEN_API_KEY = os.getenv("GEMINI_API_KEY")
 model = OpenAI(api_key=OPEN_API_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/")
 
 def run_scraper():
@@ -68,7 +68,7 @@ def gemini_chat(message, history):
             model="gemini-1.5-flash",
             messages=[
                 {"role": "system", "content": system_content},
-                {"role": "user", "content": message}
+                {"role": "user", "content": message},
             ],
             max_tokens=500,
         )
